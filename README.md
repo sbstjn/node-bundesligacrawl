@@ -1,14 +1,11 @@
-Current `somehow stable` Version for getting an array of the upcoming matches. This works online for season 2012!
+This is a basic crawler for getting the results or upcomign matches for the German Fußball Bundesliga (Season 1999/2000 to 2010/2011). Fire up `node parse.js` and enter the needed params in your terminal:
 
-This is a basic crawler for getting the results or upcomign matches for the German Fußball Bundesliga. Fire up `node parse.js` and enter the needed params in your terminal:
-
-    02:11:03 > node parse.js 
-    Season (for 2010/2011 enter 2011): 2012
-    Spieltag: 1
-    Limit: 4
-    [ [ { date: '05.08.2011',
+    Season (2000 - 2012): 2011
+    Matchday to start from: 1
+    Last Matchday to get: 1
+    [ [ { date: '20.08.10',
           time: '20:30',
-          heim: 'Borussia Dortmund',
-          gast: 'Hamburger SV',
-          result: '-:- (-:-)' },
+          home: 'FC Bayern München',
+          guest: 'VfL Wolfsburg',
+          result: '2:1 (1:0)' },
     …

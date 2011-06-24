@@ -59,7 +59,7 @@ function parseNextGames() {
     if (urlStack.length > 0) {
         curObject   = urlStack.shift();
         curMatchday = curObject.matchday;
-        
+
         if (matchday[curMatchday] == null) {
             matchday[curMatchday] = new Array();
         }
@@ -71,11 +71,12 @@ function parseNextGames() {
                 var window  = require('jsdom').jsdom(html, null, { FetchExternalResources: false, ProcessExternalResources: false, MutationEvents: false, QuerySelector: false }).createWindow();
                 var $       = require('jquery').create(window);
                 var $       = require('jquery').create(window);
-        
+
                 $("tr").each( function(el) {
                     if ($(this).find('.tn01').first() != null) {
                         curDatum = $(this).find('.tn01').first().text();
                         if (curDatum != 'Datum' && curDatum != '' && curDatum != null) {
+
                             curMatch = {
                                 date:       curDatum                             
                               , time:       $(this).find('.tn02').first().text() 
@@ -83,14 +84,14 @@ function parseNextGames() {
                               , guest:      $(this).find('.tn05').first().text() 
                               , result:     $(this).find('.tn06').first().text() 
                             };
-                        
+
                             if (curMatch.date != null && curMatch.time != null && curMatch.home != null && curMatch.guest != null && curMatch.result != null) {
                                 matchday[curMatchday].push(curMatch);
                             }
                         }
                     }
                 });
-    
+
                 // Start next matchday
                 parseNextGames();
             }
