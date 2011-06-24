@@ -1,13 +1,12 @@
 var sys = require("sys");
 var st = process.openStdin();
 
-var DEF_CURRENT_SEASON  = 2011;
+var DEF_CURRENT_SEASON  = 2012;
 var DEF_CURRENT_PATH    = 'http://dfl.de/de/inc/spieltage/liga/{SPIELTAG}.html?666';
-var DEF_ARCHIVE_PATH    = 'http://dfl.de/data/analysis/de/22/{SAISON}/fixtures/{SPIELTAG}.htm?1308936016610';
-var DEF_INPUT_OFFSET    = -1;
+var DEF_ARCHIVE_PATH    = 'http://dfl.de/data/analysis/de/22/{SAISON}/fixtures/{SPIELTAG}.htm?666';
 var DEF_MODE_CURRENT    = 'current';
 var DEF_MODE_ARCHIVE    = 'archive';
-var DEF_ARCHIVE_MAPPING = {2010: 2009, 2009: 2008, 2008: 8, 2007: 7, 2006: 6, 2005: 5, 2004: 4, 2003: 3, 2002: 2, 2001: 1, 2000: 10};
+var DEF_ARCHIVE_MAPPING = {2011: 2010, 2010: 2009, 2009: 2008, 2008: 8, 2007: 7, 2006: 6, 2005: 5, 2004: 4, 2003: 3, 2002: 2, 2001: 1, 2000: 10};
 
 var curSeason   = null;
 var curMatchday = null;
@@ -24,15 +23,12 @@ var matchday    = new Array();
  * @return array of matchdays containing array of matchday objects
  */
 function fetchGames(thisSeason, thisMatchday, thisLimit) {
-    // User has to enter the year of the last match, url requires year of season start
-    thisSeason = thisSeason*1 + DEF_INPUT_OFFSET*1;
-    
     // Set variables for different html responses 
     if (thisSeason == DEF_CURRENT_SEASON) {
         baseURL = DEF_CURRENT_PATH;  
         curMode = DEF_MODE_CURRENT;
     } else {
-        thisSeason = DEF_ARCHIVE_MAPPING[(thisSeason - DEF_INPUT_OFFSET)*1];
+        thisSeason = DEF_ARCHIVE_MAPPING[thisSeason*1];
         baseURL = DEF_ARCHIVE_PATH;
         curMode = DEF_MODE_ARCHIVE;
     }
@@ -40,7 +36,7 @@ function fetchGames(thisSeason, thisMatchday, thisLimit) {
     if (thisSeason == null) {
         console.log('****');
         console.log('* Sorry, but no mapping for this season available.');
-        console.log('* https://gist.github.com/1045310 for more information');
+        console.log('* See README.mapping for more information');
         console.log('****');
     } else {
         // create stack of matchdays
@@ -70,29 +66,34 @@ function parseNextGames() {
 
         getPage(curObject.url, function(body) {
             // Parse current season, this needs some different handling
-            
-            var html    = "<!doctype html><html><body>" + body + "</body></html>";            
-            var window  = require('jsdom').jsdom(html, null, { FetchExternalResources: false, ProcessExternalResources: false, MutationEvents: false, QuerySelector: false }).createWindow();
-            var $       = require('jquery').create(window);
-            var $       = require('jquery').create(window);
+            if (body.indexOf('<body') == '-1') {           
+                var html    = "<!doctype html><html><body>" + body + "</body></html>";            
+                var window  = require('jsdom').jsdom(html, null, { FetchExternalResources: false, ProcessExternalResources: false, MutationEvents: false, QuerySelector: false }).createWindow();
+                var $       = require('jquery').create(window);
+                var $       = require('jquery').create(window);
+        
+                $("tr").each( function(el) {
+                    if ($(this).find('.tn01').first() != null) {
+                        curDatum = $(this).find('.tn01').first().text();
+                        if (curDatum != 'Datum' && curDatum != '' && curDatum != null) {
+                            curMatch = {
+                                date:       curDatum                             
+                              , time:       $(this).find('.tn02').first().text() 
+                              , home:       $(this).find('.tn03').first().text() 
+                              , guest:      $(this).find('.tn05').first().text() 
+                              , result:     $(this).find('.tn06').first().text() 
+                            };
+                        
+                            if (curMatch.date != null && curMatch.time != null && curMatch.home != null && curMatch.guest != null && curMatch.result != null) {
+                                matchday[curMatchday].push(curMatch);
+                            }
+                        }
+                    }
+                });
     
-            $("tr").each( function(el) {
-                curDatum = $(this).find('.tn01').first().text();
-                if (curDatum != 'Datum' && curDatum != '') {
-                    curMatch = {
-                        date:       curDatum                             
-                      , time:       $(this).find('.tn02').first().text() 
-                      , home:       $(this).find('.tn03').first().text() 
-                      , guest:      $(this).find('.tn05').first().text() 
-                      , result:     $(this).find('.tn06').first().text() 
-                    };
-                
-                    matchday[curMatchday].push(curMatch);
-                }
-            });
-
-            // Start next matchday
-            parseNextGames();
+                // Start next matchday
+                parseNextGames();
+            }
         });
     } else {
         finishGames();
@@ -152,10 +153,8 @@ st.addListener("data", function(d) {
         
         isDone = true;
     }    
-    
-    
 }).addListener("end", function() {
 
 });
 
-sys.print("Season (for 2010/2011 enter 2011): ");
+sys.print("Season (2000 - 2012): ");
