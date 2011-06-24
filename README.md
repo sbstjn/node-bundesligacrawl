@@ -1,4 +1,4 @@
-Current `somehow stable` Version for getting an array of the upcoming matches. This works online for season 2012!
+Current `In Development` Version. There might be bugs :)
 
 This is a basic crawler for getting the results or upcomign matches for the German Fußball Bundesliga. Fire up `node parse.js` and enter the needed params in your terminal:
 
