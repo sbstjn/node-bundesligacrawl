@@ -106,6 +106,10 @@ function parseNextGames() {
  */
 function finishGames() {
     console.log(matchday);
+    
+    var db = require('./db.conf');
+    console.log(db.dbUser);
+    
 }
 
 /**
