@@ -1,4 +1,4 @@
-This is a basic crawler for getting the results or upcomign matches for the German Fußball Bundesliga. Fire up `node parse.js` and enter the needed params:
+This is a basic crawler for getting the results or upcomign matches for the German Fußball Bundesliga. Fire up `node parse.js` and enter the needed params in your terminal:
 
     02:11:03 > node parse.js 
     Season (for 2010/2011 enter 2011): 2012
