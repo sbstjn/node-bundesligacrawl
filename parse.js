@@ -15,6 +15,18 @@ var curMode     = null;
 var urlStack    = new Array();
 var matchday    = new Array();
 
+/**
+ * Custom DB Import for xaleo.de
+ **/
+var Client = require('mysql').Client,
+    client = new Client();
+
+client.user     = 'USERNAME';
+client.password = 'PASSWORD';
+client.host     = 'HOSTNAME';
+client.connect();
+client.query('USE DATABASE');
+
 /** 
  * Get matchdays from Bundesliga 
  * @param int thisSeason season
@@ -60,10 +72,6 @@ function parseNextGames() {
         curObject   = urlStack.shift();
         curMatchday = curObject.matchday;
 
-        if (matchday[curMatchday] == null) {
-            matchday[curMatchday] = new Array();
-        }
-
         getPage(curObject.url, function(body) {
             // Parse current season, this needs some different handling
             if (body.indexOf('<body') == '-1') {           
@@ -78,7 +86,8 @@ function parseNextGames() {
                         if (curDatum != 'Datum' && curDatum != '' && curDatum != null) {
 
                             curMatch = {
-                                date:       curDatum                             
+                                day:        curMatchday
+                              , date:       curDatum                             
                               , time:       $(this).find('.tn02').first().text() 
                               , home:       $(this).find('.tn03').first().text() 
                               , guest:      $(this).find('.tn05').first().text() 
@@ -86,7 +95,7 @@ function parseNextGames() {
                             };
 
                             if (curMatch.date != null && curMatch.time != null && curMatch.home != null && curMatch.guest != null && curMatch.result != null) {
-                                matchday[curMatchday].push(curMatch);
+                                matchday.push(curMatch);
                             }
                         }
                     }
@@ -105,11 +114,55 @@ function parseNextGames() {
  * Finish games
  */
 function finishGames() {
-    console.log(matchday);
-    
-    var db = require('./db.conf');
-    console.log(db.dbUser);
-    
+    if (matchday.length > 0) {
+        parseNextGameIntoDB();
+    } else {
+        console.log('finished…');
+    }
+}
+
+function parseNextGameIntoDB() {
+    if (matchday.length == 0) {
+        console.log('done');
+    } else {
+        var nextGame = matchday.shift();
+        var thisHome = nextGame.home;
+        thisHome = thisHome.replace("'", "\\'");
+        client.query("SELECT * FROM tipp_teams WHERE team = '" + thisHome + "' ",
+            function selectCb(err, results, fields) {
+                if (err) {
+                    throw err;
+                }
+                
+                if (results[0]) {
+                    var thisHomeID = results[0].id;
+                    
+                    var thisGuest = nextGame.guest;
+                    thisGuest = thisGuest.replace("'", "\\'");
+                    client.query("SELECT * FROM tipp_teams WHERE team = '" + thisGuest + "' ",
+                        function selectCb(err, results, fields) {
+                            if (err) {
+                                throw err;
+                            }
+                            
+                            if (results[0]) {                                
+                                var tmpDate = nextGame.date;
+                                    tmpDate = tmpDate.split('.');
+                                var currentTimeStamp = tmpDate[2] + '-' + tmpDate[1] + '-' + tmpDate[0] + ' ' + nextGame.time + ':00';
+                                var insertQuery = "INSERT INTO tipp_spiele (`saison`, `spieltag`, `datum`, `heim_id`,`gast_id`) VALUES ('" + curSeason*1 + "', '" + nextGame.day + "', '" + currentTimeStamp + "', '" + thisHomeID*1 + "', '" + results[0].id*1 + "');";
+                                
+                                console.log(insertQuery);
+                                
+                                parseNextGameIntoDB();
+                            } else {
+                                parseNextGameIntoDB();
+                            }
+                        }
+                    );
+                }
+            }
+        );
+    }
 }
 
 /**
